@@ -19,8 +19,6 @@ export interface Env {
   // MY_BUCKET: R2Bucket;
 }
 
-type Req = Request & {};
-
 export default {
   async fetch(
     request: Request,
