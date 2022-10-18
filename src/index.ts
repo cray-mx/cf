@@ -1,23 +1,53 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `wrangler dev src/index.ts` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `wrangler publish src/index.ts --name my-worker` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { Router } from "itty-router";
 
-export interface Env {
-  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-  // MY_KV_NAMESPACE: KVNamespace;
-  //
-  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-  // MY_DURABLE_OBJECT: DurableObjectNamespace;
-  //
-  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-  // MY_BUCKET: R2Bucket;
+export interface Env {}
+
+interface User {
+  id: number;
+  name: string;
 }
+
+const users: User[] = [
+  {
+    id: 1,
+    name: "Rayaan",
+  },
+  {
+    id: 2,
+    name: "Jack",
+  },
+];
+
+const getId = (url: string): number | undefined => {
+  const isValid = url.includes("?") && url.includes("=");
+  if (!isValid) {
+    return undefined;
+  }
+  return url.split("?")[1].split("=")[0] === "id"
+    ? parseInt(url.split("?")[1].split("=")[1])
+    : undefined;
+};
+
+const getUser = (id: number): User | undefined => {
+  return users.find((user) => user.id === id);
+};
+
+const handleGetRoute = (request: Request) => {
+  const id = getId(request.url);
+  if (!id) {
+    return new Response("No ID given");
+  }
+  const user = getUser(id);
+  if (!user) {
+    return new Response("Given ID is invalid");
+  }
+  const name = user.name ?? "name";
+  return new Response(`Welcome ${name}`);
+};
+
+const router = Router();
+
+router.get("/", handleGetRoute).all("*", () => new Response("Page not found"));
 
 export default {
   async fetch(
@@ -25,8 +55,8 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    const req = (await request.json()) as Record<string, string>;
-    const name = req.name;
-    return new Response(`Hello ${name}`);
+    return router
+      .handle(request)
+      .catch((err) => new Response("Something went wrong"));
   },
 };

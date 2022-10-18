@@ -1,3 +1,4 @@
 name = "edgy"
 main = "src/index.ts"
+account_id = "d9d2e7ee4d04e088ab3a93f8784c934f"
 compatibility_date = "2022-10-07"
